@@ -1,6 +1,7 @@
 venv/
 .venv/
 inference/llama/models/
+.models-cache/
 
 # Python cache artifacts
 **/__pycache__/
