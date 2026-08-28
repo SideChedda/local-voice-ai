@@ -21,7 +21,7 @@ from livekit.agents import (
     cli,
     function_tool,
 )
-from livekit.plugins import openai, silero
+from livekit.plugins import elevenlabs, openai, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 logger = logging.getLogger("agent")
@@ -58,6 +58,35 @@ class Assistant(Agent):
         return f"The product of {number1} and {number2} is {number1 * number2}."
 
 
+def _build_tts(tts_provider: str):
+    """Build the TTS plugin for the configured provider.
+
+    TTS_PROVIDER=elevenlabs (GRIM-25): cloud dependency, real Grimlock voice.
+    TTS_PROVIDER=kokoro (default): offline fallback, generic voice.
+    """
+    if tts_provider == "elevenlabs":
+        api_key = os.getenv("ELEVENLABS_API_KEY")
+        voice_id = os.getenv("GRIMLOCK_VOICE_ID")
+        if not api_key or not voice_id:
+            raise RuntimeError(
+                "TTS_PROVIDER=elevenlabs requires ELEVENLABS_API_KEY and "
+                "GRIMLOCK_VOICE_ID to be set."
+            )
+        return elevenlabs.TTS(api_key=api_key, voice_id=voice_id)
+
+    tts_base_url = os.getenv("TTS_BASE_URL", "http://127.0.0.1:8880/v1")
+    tts_voice = os.getenv("TTS_VOICE", "af_nova")
+    tts_api_key = os.getenv("TTS_API_KEY", "no-key-needed")
+    # The model name selects the wire protocol the openai TTS plugin uses:
+    # only {"tts-1", "tts-1-hd"} use the raw-audio-bytes stream that the
+    # Kokoro server speaks. Any other name (e.g. "kokoro") routes the plugin
+    # into the gpt-4o-mini-tts SSE reader, which parses Kokoro's binary audio
+    # body as text, pushes zero frames, and raises "no audio frames were
+    # pushed". Kokoro ignores the model field, so "tts-1" is purely a
+    # protocol selector here.
+    return openai.TTS(base_url=tts_base_url, model="tts-1", voice=tts_voice, api_key=tts_api_key)
+
+
 server = AgentServer()
 
 
@@ -88,13 +117,11 @@ async def my_agent(ctx: JobContext) -> None:
     stt_model = os.getenv("STT_MODEL", default_stt_model)
     stt_api_key = os.getenv("STT_API_KEY", "no-key-needed")
 
-    tts_base_url = os.getenv("TTS_BASE_URL", "http://127.0.0.1:8880/v1")
-    tts_voice = os.getenv("TTS_VOICE", "af_nova")
-    tts_api_key = os.getenv("TTS_API_KEY", "no-key-needed")
+    tts_provider = os.getenv("TTS_PROVIDER", "kokoro").lower()
 
     logger.info(
         "agent session: stt=%s/%s llm=%s/%s tts=%s",
-        stt_provider, stt_model, llama_base_url, llama_model, tts_base_url,
+        stt_provider, stt_model, llama_base_url, llama_model, tts_provider,
     )
 
     wake_word = os.getenv("WAKE_WORD", "").strip().lower() in {"1", "true", "yes", "on"}
@@ -104,14 +131,7 @@ async def my_agent(ctx: JobContext) -> None:
     session = AgentSession(
         stt=openai.STT(base_url=stt_base_url, model=stt_model, api_key=stt_api_key),
         llm=openai.LLM(base_url=llama_base_url, model=llama_model, api_key=llama_api_key),
-        # The model name selects the wire protocol the openai TTS plugin uses:
-        # only {"tts-1", "tts-1-hd"} use the raw-audio-bytes stream that the
-        # Kokoro server speaks. Any other name (e.g. "kokoro") routes the plugin
-        # into the gpt-4o-mini-tts SSE reader, which parses Kokoro's binary audio
-        # body as text, pushes zero frames, and raises "no audio frames were
-        # pushed". Kokoro ignores the model field, so "tts-1" is purely a
-        # protocol selector here.
-        tts=openai.TTS(base_url=tts_base_url, model="tts-1", voice=tts_voice, api_key=tts_api_key),
+        tts=_build_tts(tts_provider),
         turn_detection=MultilingualModel(),
         vad=ctx.proc.userdata["vad"],
         preemptive_generation=True,
