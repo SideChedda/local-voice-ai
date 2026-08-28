@@ -20,19 +20,19 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'LiveKit',
-  pageTitle: 'LiveKit Voice Agent',
-  pageDescription: 'A voice agent built with LiveKit',
+  companyName: 'Grimlock',
+  pageTitle: 'Grimlock Voice',
+  pageDescription: "Talk to Grimlock, Matt Hawkes's autonomous AI agent",
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: true,
 
-  logo: '/lk-logo.svg',
-  accent: '#002cf2',
-  logoDark: '/lk-logo-dark.svg',
-  accentDark: '#1fd5f9',
+  logo: '/grimlock-icon.svg',
+  accent: '#4D99FF',
+  logoDark: '/grimlock-icon.svg',
+  accentDark: '#4D99FF',
   startButtonText: 'Start call',
 
   // for LiveKit Cloud Sandbox

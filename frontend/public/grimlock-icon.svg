@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!--
+    Grimlock Icon · v2 · 2026-04-08
+    Simplified geometric Dinobot head matching the grimlock-avatar.png style.
+    Steel hide + bold cartoon outline + single Cyber Eye focal point.
+    Designed at 64×64 — scales cleanly to favicon and toolbar sizes.
+  -->
+  <defs>
+    <!-- Steel hide gradient -->
+    <linearGradient id="steelHide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#B6B9BB"/>
+      <stop offset="50%" stop-color="#999999"/>
+      <stop offset="100%" stop-color="#6F7176"/>
+    </linearGradient>
+
+    <!-- Warm body gradient -->
+    <linearGradient id="hideBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#FBD1A6"/>
+      <stop offset="60%" stop-color="#A97F55"/>
+      <stop offset="100%" stop-color="#5F4835"/>
+    </linearGradient>
+
+    <!-- Cyber Eye radial glow -->
+    <radialGradient id="cyberEye" cx="40%" cy="40%" r="60%">
+      <stop offset="0%"  stop-color="#BFDBFF"/>
+      <stop offset="40%" stop-color="#4D99FF"/>
+      <stop offset="100%" stop-color="#1E5FC7"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Neck / body (behind head) -->
+  <path d="M 14 46
+           L 12 60
+           L 36 60
+           L 34 44
+           Z"
+        fill="url(#hideBody)"
+        stroke="#000000"
+        stroke-width="2.5"
+        stroke-linejoin="round"/>
+
+  <!-- Head — chunky T-Rex profile facing right -->
+  <path d="M 8 30
+           Q 6 18, 18 12
+           Q 30 8, 44 14
+           Q 54 18, 55 28
+           L 52 30
+           Q 54 34, 50 37
+           L 48 40
+           Q 40 44, 26 42
+           Q 14 40, 10 36
+           Z"
+        fill="url(#steelHide)"
+        stroke="#000000"
+        stroke-width="2.5"
+        stroke-linejoin="round"/>
+
+  <!-- Jaw line separating upper/lower -->
+  <path d="M 15 33
+           Q 26 38, 44 35"
+        fill="none"
+        stroke="#000000"
+        stroke-width="1.8"
+        stroke-linecap="round"/>
+
+  <!-- Teeth (upper) — sharp white triangles -->
+  <g fill="#F8F6F0" stroke="#000000" stroke-width="0.8" stroke-linejoin="miter">
+    <polygon points="20,33 22,38 24,33"/>
+    <polygon points="26,33 28,39 30,33"/>
+    <polygon points="32,33 34,38 36,33"/>
+    <polygon points="38,33 40,37 42,33"/>
+  </g>
+
+  <!-- Eye socket (dark base) -->
+  <ellipse cx="38" cy="21" rx="6.5" ry="5" fill="#0E0E0E"/>
+
+  <!-- Cyber Eye — the focal point -->
+  <ellipse cx="38" cy="21" rx="5" ry="4" fill="url(#cyberEye)" stroke="#000000" stroke-width="1.2"/>
+
+  <!-- Eye shine highlight -->
+  <circle cx="36.5" cy="19.5" r="1.4" fill="#F8F6F0"/>
+
+  <!-- Chrome highlight on top of head -->
+  <path d="M 22 13
+           Q 30 10, 40 14"
+        fill="none"
+        stroke="#F8F6F0"
+        stroke-width="1.2"
+        stroke-linecap="round"
+        opacity="0.7"/>
+</svg>
