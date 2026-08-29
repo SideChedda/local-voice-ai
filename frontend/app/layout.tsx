@@ -1,41 +1,20 @@
-import { Public_Sans } from 'next/font/google';
-import localFont from 'next/font/local';
+import { JetBrains_Mono, Orbitron } from 'next/font/google';
 import { APP_CONFIG_DEFAULTS } from '@/app-config';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { ThemeToggle } from '@/components/app/theme-toggle';
 import { cn, getStyles } from '@/lib/utils';
 import '@/styles/globals.css';
 
-const publicSans = Public_Sans({
-  variable: '--font-public-sans',
+// GRIM-60: Grimlock Brand v2 fonts, matching grimlock-control's
+// client/index.html (Orbitron display font, JetBrains Mono body/mono font).
+const orbitron = Orbitron({
+  variable: '--font-orbitron',
   subsets: ['latin'],
 });
 
-const commitMono = localFont({
-  display: 'swap',
-  variable: '--font-commit-mono',
-  src: [
-    {
-      path: '../fonts/CommitMono-400-Regular.otf',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../fonts/CommitMono-700-Regular.otf',
-      weight: '700',
-      style: 'normal',
-    },
-    {
-      path: '../fonts/CommitMono-400-Italic.otf',
-      weight: '400',
-      style: 'italic',
-    },
-    {
-      path: '../fonts/CommitMono-700-Italic.otf',
-      weight: '700',
-      style: 'italic',
-    },
-  ],
+const jetbrainsMono = JetBrains_Mono({
+  variable: '--font-jetbrains-mono',
+  subsets: ['latin'],
 });
 
 interface RootLayoutProps {
@@ -52,8 +31,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
       lang="en"
       suppressHydrationWarning
       className={cn(
-        publicSans.variable,
-        commitMono.variable,
+        orbitron.variable,
+        jetbrainsMono.variable,
         'scroll-smooth font-sans antialiased'
       )}
     >
