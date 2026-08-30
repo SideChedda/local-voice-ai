@@ -10,6 +10,8 @@ import logging
 import os
 from typing import Any
 
+import httpx
+
 from dotenv import load_dotenv
 from livekit.agents import (
     Agent,
@@ -177,9 +179,23 @@ async def my_agent(ctx: JobContext) -> None:
     else:
         stt = openai.STT(base_url=stt_base_url, model=stt_model, api_key=stt_api_key)
 
+    # GRIM-23 phase 4: grimlock-voice-gateway/grimlock-daemon key a ChatSession
+    # by this identity (see GrimlockBrain.respond()'s sessionKey). The openai.LLM
+    # plugin only accepts `user` at construction time, and wait_for_participant()
+    # connects the room for us — so identity has to be known, and the room
+    # connected, before AgentSession/LLM are built, not after (the previous
+    # order: build session -> start -> connect -> wait_for_participant, meant
+    # user identity was never actually available to pass to the LLM).
+    participant = await ctx.wait_for_participant()
+
     session = AgentSession(
         stt=stt,
-        llm=openai.LLM(base_url=llama_base_url, model=llama_model, api_key=llama_api_key),
+        llm=openai.LLM(
+            base_url=llama_base_url,
+            model=llama_model,
+            api_key=llama_api_key,
+            user=participant.identity,
+        ),
         tts=_build_tts(tts_provider, tts_base_url, tts_voice, tts_api_key),
         turn_detection=_turn_detection_mode(),
         vad=session_vad,
@@ -187,14 +203,35 @@ async def my_agent(ctx: JobContext) -> None:
     )
 
     await session.start(agent=Assistant(), room=ctx.room)
-    await ctx.connect()
+    # ctx.connect() is not called here: wait_for_participant() above already
+    # connected the room, and JobContext.connect() must be called only once.
+
+    # GRIM-26 phase 2: tell grimlock-voice-gateway/grimlock-daemon the
+    # conversation is over on disconnect, so GrimlockBrain generates and
+    # stores a session summary — without this, endSession() never fires for
+    # voice and "earlier today" recall on the next call has nothing to find.
+    # Best-effort: the gateway itself already no-ops safely if this fails or
+    # is unreachable (e.g. LLAMA_BASE_URL points straight at llama.cpp, not
+    # the gateway, in a config where GRIM-23 phase 4 isn't wired in) — a
+    # failed goodbye should never be user-visible or crash agent shutdown.
+    async def _end_grimlock_session(reason: str) -> None:
+        session_end_url = llama_base_url.rstrip("/")
+        if session_end_url.endswith("/v1"):
+            session_end_url = session_end_url[: -len("/v1")]
+        session_end_url = f"{session_end_url}/v1/session/end"
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                await client.post(session_end_url, json={"sessionKey": participant.identity})
+        except Exception:
+            logger.debug("could not end Grimlock session (reason=%s) at %s", reason, session_end_url)
+
+    ctx.add_shutdown_callback(_end_grimlock_session)
 
     if wake_word:
         # Join deaf, wait for the wake phrase, then wake up and greet.
         from .wakeword import wait_for_wake_word
 
         session.input.set_audio_enabled(False)
-        participant = await ctx.wait_for_participant()
         try:
             await wait_for_wake_word(participant, wake_word_model, wake_word_threshold)
         except Exception:
