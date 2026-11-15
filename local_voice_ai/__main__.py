@@ -178,7 +178,9 @@ def _build_specs(cfg: Config) -> list[ChildSpec]:
                     livekit_bin,
                     "--dev",
                     "--bind",
-                    "0.0.0.0",
+                    # LIVEKIT_BIND_HOST=127.0.0.1 keeps the signalling port off
+                    # the LAN on a single-machine install (dev keys, no auth).
+                    os.getenv("LIVEKIT_BIND_HOST", "0.0.0.0"),
                     "--port",
                     str(cfg.livekit_bind_port),
                     # livekit-server's RTC TCP port flag is the dotted config
